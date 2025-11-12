@@ -1,0 +1,81 @@
+<h2>Home</h2>
+<p>Sesión iniciada 🎉</p>
+<button routerLink="/login" (click)="$event.preventDefault(); auth.logout()">Salir</button>
+
+<hr />
+
+<h3>Generar documento</h3>
+
+<form (ngSubmit)="generar()" #f="ngForm">
+  <label>
+    Plantilla (en S3, sin .html):
+    <input type="text" [(ngModel)]="plantilla" name="plantilla" required />
+  </label>
+  <br />
+
+  <label>
+    Asegurado:
+    <input type="text" [(ngModel)]="asegurado" name="asegurado" required />
+  </label>
+  <br />
+
+  <label>
+    Nombre completo / Razón social:
+    <input type="text" [(ngModel)]="nombreCompletoRazonSocial" name="nombre" required />
+  </label>
+  <br />
+
+  <!-- NUEVO: fecha -->
+  <label>
+    Fecha:
+    <input type="date" [(ngModel)]="fecha" name="fecha" required />
+  </label>
+
+  <hr />
+
+  <!-- NUEVO: repetidor de gastos -->
+  <h4>Gastos</h4>
+  <div *ngFor="let g of gastos; let i = index" style="border:1px solid #ddd; padding:8px; margin-bottom:8px;">
+    <div><strong>Gasto #{{ i + 1 }}</strong></div>
+
+    <label style="display:block; margin-top:6px;">
+      Descripción:
+      <input type="text" [(ngModel)]="g.descripcion" name="g_desc_{{i}}" required />
+    </label>
+
+    <label style="display:block; margin-top:6px;">
+      Presentado:
+      <input type="text" [(ngModel)]="g.presentado" name="g_pres_{{i}}" required />
+    </label>
+
+    <label style="display:block; margin-top:6px;">
+      Elegible:
+      <input type="text" [(ngModel)]="g.elegible" name="g_eleg_{{i}}" required />
+    </label>
+
+    <button type="button" (click)="removeGasto(i)" style="margin-top:6px;">Eliminar</button>
+  </div>
+
+  <button type="button" (click)="addGasto()">+ Añadir gasto</button>
+
+  <br /><br />
+  <button type="submit" [disabled]="loading || !f.form.valid">
+    {{ loading ? 'Generando...' : 'Generar' }}
+  </button>
+</form>
+
+<div *ngIf="errorMsg" style="color:crimson;margin-top:1rem;">
+  {{ errorMsg }}
+</div>
+
+<div *ngIf="result" style="margin-top:1rem;">
+  <p *ngIf="result.pdfUrl">
+    PDF: <a [href]="result.pdfUrl" target="_blank" rel="noopener">Abrir PDF</a>
+  </p>
+  <p *ngIf="result.htmlUrl">
+    Email HTML: <a [href]="result.htmlUrl" target="_blank" rel="noopener">Abrir HTML</a>
+  </p>
+  <p *ngIf="!result.pdfUrl && !result.htmlUrl">
+    No se devolvieron URLs. Revisa CloudWatch logs de la Lambda.
+  </p>
+</div>
