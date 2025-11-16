@@ -1,81 +1,253 @@
-<h2>Home</h2>
-<p>Sesión iniciada 🎉</p>
-<button routerLink="/login" (click)="$event.preventDefault(); auth.logout()">Salir</button>
+<!-- src/app/pages/home/home.component.html -->
+<div class="home-wrapper">
+  <!-- CABECERA -->
+  <header class="home-header">
+    <div>
+      <h1>Generador de documentos</h1>
+      <p class="subtitle">
+        Selecciona una plantilla y rellena los datos para generar tu PDF/HTML.
+      </p>
 
-<hr />
+      <p class="user-info" *ngIf="auth.user$ | async as user">
+        Sesión iniciada como
+        <strong>{{ user.email || user.uid }}</strong>
+      </p>
+    </div>
 
-<h3>Generar documento</h3>
+    <button type="button" class="logout-btn" (click)="auth.logout()">
+      Cerrar sesión
+    </button>
+  </header>
 
-<form (ngSubmit)="generar()" #f="ngForm">
-  <label>
-    Plantilla (en S3, sin .html):
-    <input type="text" [(ngModel)]="plantilla" name="plantilla" required />
-  </label>
-  <br />
+  <main class="home-main">
+    <!-- SECCIÓN: PLANTILLAS -->
+    <section class="panel templates-section">
+      <header class="panel-header">
+        <h2>Mis plantillas</h2>
+        <p>Solo podrás usar las plantillas asociadas a tu usuario.</p>
+      </header>
 
-  <label>
-    Asegurado:
-    <input type="text" [(ngModel)]="asegurado" name="asegurado" required />
-  </label>
-  <br />
+      <div *ngIf="templates.length; else noTemplates">
+        <div class="templates-grid">
+          <article
+            class="template-card"
+            *ngFor="let t of templates"
+            [class.selected]="t.id === plantilla"
+            (click)="selectTemplate(t)"
+          >
+            <h3>{{ t.title }}</h3>
+            <p class="template-description">
+              {{ t.description }}
+            </p>
 
-  <label>
-    Nombre completo / Razón social:
-    <input type="text" [(ngModel)]="nombreCompletoRazonSocial" name="nombre" required />
-  </label>
-  <br />
+            <div class="template-meta">
+              <span class="meta-pill" *ngIf="t.showAsegurado">
+                Asegurado
+              </span>
+              <span class="meta-pill" *ngIf="t.showNombre">
+                Nombre/Razón social
+              </span>
+              <span class="meta-pill" *ngIf="t.showFecha">
+                Fecha
+              </span>
+              <span class="meta-pill gastos-pill" *ngIf="t.showGastos">
+                Incluye gastos
+              </span>
+            </div>
 
-  <!-- NUEVO: fecha -->
-  <label>
-    Fecha:
-    <input type="date" [(ngModel)]="fecha" name="fecha" required />
-  </label>
+            <div class="template-footer">
+              <span class="template-id">ID: {{ t.id }}</span>
+              <span class="template-cta">
+                {{ t.id === plantilla ? 'Seleccionada' : 'Usar plantilla' }}
+              </span>
+            </div>
+          </article>
+        </div>
+      </div>
 
-  <hr />
+      <ng-template #noTemplates>
+        <p class="empty-msg">
+          No tienes plantillas configuradas todavía. Sube alguna a S3 y
+          añádela aquí.
+        </p>
+      </ng-template>
+    </section>
 
-  <!-- NUEVO: repetidor de gastos -->
-  <h4>Gastos</h4>
-  <div *ngFor="let g of gastos; let i = index" style="border:1px solid #ddd; padding:8px; margin-bottom:8px;">
-    <div><strong>Gasto #{{ i + 1 }}</strong></div>
+    <!-- SECCIÓN: FORMULARIO DE VARIABLES -->
+    <section class="panel form-section" *ngIf="selectedTemplate">
+      <header class="panel-header">
+        <h2>Datos para: {{ selectedTemplate?.title }}</h2>
+        <p>
+          Rellena los campos necesarios para esta plantilla antes de generar el
+          documento.
+        </p>
+      </header>
 
-    <label style="display:block; margin-top:6px;">
-      Descripción:
-      <input type="text" [(ngModel)]="g.descripcion" name="g_desc_{{i}}" required />
-    </label>
+      <form (ngSubmit)="generar()" #f="ngForm" novalidate>
+        <div class="form-grid">
+          <!-- ASEGURADO -->
+          <div class="form-group" *ngIf="selectedTemplate?.showAsegurado">
+            <label for="asegurado">Asegurado</label>
+            <input
+              id="asegurado"
+              type="text"
+              name="asegurado"
+              [(ngModel)]="asegurado"
+              required
+              placeholder="Identificador del asegurado"
+            />
+          </div>
 
-    <label style="display:block; margin-top:6px;">
-      Presentado:
-      <input type="text" [(ngModel)]="g.presentado" name="g_pres_{{i}}" required />
-    </label>
+          <!-- NOMBRE / RAZÓN SOCIAL -->
+          <div class="form-group" *ngIf="selectedTemplate?.showNombre">
+            <label for="nombre">
+              Nombre completo / Razón social
+            </label>
+            <input
+              id="nombre"
+              type="text"
+              name="nombreCompletoRazonSocial"
+              [(ngModel)]="nombreCompletoRazonSocial"
+              required
+              placeholder="Ej: JUAN PÉREZ S.A."
+            />
+          </div>
 
-    <label style="display:block; margin-top:6px;">
-      Elegible:
-      <input type="text" [(ngModel)]="g.elegible" name="g_eleg_{{i}}" required />
-    </label>
+          <!-- FECHA -->
+          <div class="form-group" *ngIf="selectedTemplate?.showFecha">
+            <label for="fecha">Fecha</label>
+            <input
+              id="fecha"
+              type="date"
+              name="fecha"
+              [(ngModel)]="fecha"
+              required
+            />
+          </div>
+        </div>
 
-    <button type="button" (click)="removeGasto(i)" style="margin-top:6px;">Eliminar</button>
-  </div>
+        <!-- GASTOS -->
+        <div class="gastos-section" *ngIf="selectedTemplate?.showGastos">
+          <div class="gastos-header">
+            <h3>Gastos</h3>
+            <button
+              type="button"
+              class="secondary-btn"
+              (click)="addGasto()"
+            >
+              + Añadir gasto
+            </button>
+          </div>
 
-  <button type="button" (click)="addGasto()">+ Añadir gasto</button>
+          <div class="gastos-list">
+            <div
+              class="gasto-card"
+              *ngFor="let g of gastos; let i = index"
+            >
+              <div class="gasto-header">
+                <span>Gasto #{{ i + 1 }}</span>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="removeGasto(i)"
+                  *ngIf="gastos.length > 1"
+                >
+                  ✕
+                </button>
+              </div>
 
-  <br /><br />
-  <button type="submit" [disabled]="loading || !f.form.valid">
-    {{ loading ? 'Generando...' : 'Generar' }}
-  </button>
-</form>
+              <div class="gasto-grid">
+                <div class="form-group full">
+                  <label for="g_desc_{{ i }}">Descripción</label>
+                  <input
+                    id="g_desc_{{ i }}"
+                    type="text"
+                    name="g_desc_{{ i }}"
+                    [(ngModel)]="g.descripcion"
+                    required
+                    placeholder="Descripción del gasto"
+                  />
+                </div>
 
-<div *ngIf="errorMsg" style="color:crimson;margin-top:1rem;">
-  {{ errorMsg }}
-</div>
+                <div class="form-group">
+                  <label for="g_pres_{{ i }}">Presentado</label>
+                  <input
+                    id="g_pres_{{ i }}"
+                    type="text"
+                    name="g_pres_{{ i }}"
+                    [(ngModel)]="g.presentado"
+                    required
+                    placeholder="Ej: 120.50"
+                  />
+                </div>
 
-<div *ngIf="result" style="margin-top:1rem;">
-  <p *ngIf="result.pdfUrl">
-    PDF: <a [href]="result.pdfUrl" target="_blank" rel="noopener">Abrir PDF</a>
-  </p>
-  <p *ngIf="result.htmlUrl">
-    Email HTML: <a [href]="result.htmlUrl" target="_blank" rel="noopener">Abrir HTML</a>
-  </p>
-  <p *ngIf="!result.pdfUrl && !result.htmlUrl">
-    No se devolvieron URLs. Revisa CloudWatch logs de la Lambda.
-  </p>
+                <div class="form-group">
+                  <label for="g_eleg_{{ i }}">Elegible</label>
+                  <input
+                    id="g_eleg_{{ i }}"
+                    type="text"
+                    name="g_eleg_{{ i }}"
+                    [(ngModel)]="g.elegible"
+                    required
+                    placeholder="Ej: 100.00"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ERRORES -->
+        <p class="alert alert-error" *ngIf="errorMsg">
+          {{ errorMsg }}
+        </p>
+
+        <!-- BOTÓN GENERAR -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-btn"
+            [disabled]="loading || !f.form.valid || !plantilla"
+          >
+            <span *ngIf="!loading">Generar documento</span>
+            <span *ngIf="loading">Generando…</span>
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- RESULTADO -->
+  <section class="panel result-section" *ngIf="result">
+    <header class="panel-header">
+      <h2>Resultado</h2>
+      <p>Tu documento se ha generado correctamente.</p>
+    </header>
+
+    <div class="result-links">
+      <p *ngIf="result.pdfUrl">
+        PDF:
+        <a
+          [href]="result.pdfUrl"
+          target="_blank"
+          rel="noopener"
+        >
+          Abrir PDF
+        </a>
+      </p>
+      <p *ngIf="result.htmlUrl">
+        Email HTML:
+        <a
+          [href]="result.htmlUrl"
+          target="_blank"
+          rel="noopener"
+        >
+          Abrir HTML
+        </a>
+      </p>
+      <p *ngIf="!result.pdfUrl && !result.htmlUrl">
+        No se devolvieron URLs. Revisa los logs de CloudWatch de la Lambda.
+      </p>
+    </div>
+  </section>
 </div>

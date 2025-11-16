@@ -10,6 +10,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { LoginComponent } from './pages/login/login.component';
 import { HomeComponent } from './pages/home/home.component';
+import { ReactiveFormsModule } from '@angular/forms';  // 👈 IMPORTANTE
 
 @NgModule({
   declarations: [
@@ -20,7 +21,9 @@ import { HomeComponent } from './pages/home/home.component';
   imports: [
     BrowserModule,
     AppRoutingModule,  HttpClientModule,  // <—
-    FormsModule 
+    FormsModule,
+    ReactiveFormsModule,  
+    
   ],
   providers: [
     provideFirebaseApp(() =>
