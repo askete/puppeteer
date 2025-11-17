@@ -10,13 +10,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { LoginComponent } from './pages/login/login.component';
 import { HomeComponent } from './pages/home/home.component';
-import { ReactiveFormsModule } from '@angular/forms';  // 👈 IMPORTANTE
+import { ReactiveFormsModule } from '@angular/forms';
+import { TemplateUploadComponent } from './pages/template-upload/template-upload.component';  // 👈 IMPORTANTE
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,   // 👈 aquí (no standalone)
-    HomeComponent
+    HomeComponent, TemplateUploadComponent
   ],
   imports: [
     BrowserModule,

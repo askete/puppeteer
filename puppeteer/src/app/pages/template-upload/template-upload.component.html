@@ -1,0 +1,143 @@
+<!-- src/app/pages/template-upload/template-upload.component.html -->
+<div class="upload-wrapper">
+  <section class="panel">
+    <header class="panel-header">
+      <h1>Subir plantilla HTML</h1>
+      <p>
+        Sube tu HTML principal, opcionalmente header y footer, y asócialos a tu
+        usuario.
+      </p>
+    </header>
+
+    <form (ngSubmit)="onSubmit()" #f="ngForm" novalidate>
+      <div class="form-grid">
+        <!-- templateId -->
+        <div class="form-group">
+          <label for="templateId">ID de la plantilla</label>
+          <input
+            id="templateId"
+            name="templateId"
+            type="text"
+            [(ngModel)]="templateId"
+            required
+            placeholder="Ej: prueba_liquidacion"
+          />
+          <small class="hint">
+            Este será el nombre del fichero en S3 (sin .html).
+          </small>
+        </div>
+
+        <!-- title -->
+        <div class="form-group">
+          <label for="title">Título</label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            [(ngModel)]="title"
+            required
+            placeholder="Liquidación de gastos médicos"
+          />
+        </div>
+      </div>
+
+      <!-- description -->
+      <div class="form-group">
+        <label for="description">Descripción</label>
+        <textarea
+          id="description"
+          name="description"
+          rows="3"
+          [(ngModel)]="description"
+          placeholder="Ej: Genera una hoja de liquidación con detalle de gastos presentados y elegibles."
+        ></textarea>
+      </div>
+
+      <!-- Archivos -->
+      <div class="files-section">
+        <h2>Archivos HTML</h2>
+
+        <div class="form-group">
+          <label>HTML principal <span class="required">*</span></label>
+          <input
+            type="file"
+            accept=".html,text/html"
+            (change)="onMainFileChange($event)"
+            required
+          />
+          <small class="hint">
+            Este es el HTML que se usará como cuerpo principal del PDF.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Header (opcional)</label>
+          <input
+            type="file"
+            accept=".html,text/html"
+            (change)="onHeaderFileChange($event)"
+          />
+          <small class="hint">
+            Si lo proporcionas, se usará como cabecera del PDF.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Footer (opcional)</label>
+          <input
+            type="file"
+            accept=".html,text/html"
+            (change)="onFooterFileChange($event)"
+          />
+          <small class="hint">
+            Si lo proporcionas, se usará como pie del PDF.
+          </small>
+        </div>
+      </div>
+
+      <!-- Flags de campos -->
+      <div class="form-group">
+        <label>Campos que utiliza esta plantilla</label>
+        <div class="checkbox-row">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="showNombre"
+              name="showNombre"
+            />
+            Mostrar Nombre / Razón social
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="showFecha"
+              name="showFecha"
+            />
+            Mostrar Fecha
+          </label>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <p class="alert alert-error" *ngIf="errorMsg">
+        {{ errorMsg }}
+      </p>
+      <p class="alert alert-ok" *ngIf="okMsg">
+        {{ okMsg }}
+      </p>
+
+      <!-- Botón -->
+      <div class="actions">
+        <button
+          type="submit"
+          class="primary-btn"
+          [disabled]="loading || !templateId || !title || !mainHtml"
+        >
+          <span *ngIf="!loading">Subir plantilla</span>
+          <span *ngIf="loading">Subiendo…</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

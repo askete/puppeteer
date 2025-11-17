@@ -13,6 +13,10 @@
         <strong>{{ user.email || user.uid }}</strong>
       </p>
     </div>
+    <a routerLink="/templates/upload" class="secondary-btn">
+  Subir nueva plantilla
+</a>
+
 
     <button type="button" class="logout-btn" (click)="auth.logout()">
       Cerrar sesión
