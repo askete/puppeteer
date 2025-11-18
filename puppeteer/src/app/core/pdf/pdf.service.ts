@@ -111,38 +111,39 @@ export class PdfService {
     );
 }
 
-  getTemplateVariables(
-    userId: string,
-    templateId: string
-  ): Observable<{ templateId: string; variables: { name: string; type: string }[] }> {
-    return this.http
-      .get<any>(`${BASE_URL}/teamplates/${templateId}/variables`, {
-        params: { userId }
-      })
-      .pipe(
-        map((raw) => {
-          let parsed = raw;
+ getTemplateVariables(
+  userId: string,
+  templateId: string
+): Observable<{ templateId: string; variables: { name: string; type: string }[] }> {
+  return this.http
+    .get<any>(`${BASE_URL}/teamplates/variables`, {
+      params: { userId, templateId }   // 👈 templateId ahora va en la query
+    })
+    .pipe(
+      map((raw) => {
+        let parsed = raw;
 
-          if (!parsed?.variables && raw?.body) {
-            try {
-              parsed =
-                typeof raw.body === 'string'
-                  ? JSON.parse(raw.body)
-                  : raw.body;
-            } catch {
-              throw new Error(
-                'No se pudo parsear la respuesta de /teamplates/{id}/variables'
-              );
-            }
+        if (!parsed?.variables && raw?.body) {
+          try {
+            parsed =
+              typeof raw.body === 'string'
+                ? JSON.parse(raw.body)
+                : raw.body;
+          } catch {
+            throw new Error(
+              'No se pudo parsear la respuesta de /teamplates/variables'
+            );
           }
+        }
 
-          return {
-            templateId: parsed.templateId,
-            variables: parsed.variables ?? []
-          };
-        })
-      );
-  }
+        return {
+          templateId: parsed.templateId,
+          variables: parsed.variables ?? []
+        };
+      })
+    );
+}
+
 
   // src/app/core/pdf/pdf.service.ts
   uploadTemplate(payload: {

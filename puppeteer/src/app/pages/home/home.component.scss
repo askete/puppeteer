@@ -24,7 +24,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap; // 👈 mejor en responsive
 }
+
+.home-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 
 .home-header h1 {
   font-size: 1.9rem;
@@ -233,6 +247,14 @@ form {
       background: rgba(15, 23, 42, 1);
     }
   }
+  
+}
+
+/* Icono del calendario en inputs de fecha */
+.form-group input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+  cursor: pointer;
 }
 
 /* GASTOS */
@@ -287,6 +309,64 @@ form {
   grid-column: 1 / -1;
 }
 
+/* ASIGNATURAS */
+
+.asignaturas-section {
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(55, 65, 81, 0.9);
+  padding-top: 0.75rem;
+}
+
+.asignaturas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.asignaturas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.asignatura-card {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  padding: 0.7rem 0.75rem;
+  background: rgba(15, 23, 42, 0.95);
+  max-width: 100%;          /* 👈 para evitar que se salga */
+  box-sizing: border-box;
+}
+
+.asignatura-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+  color: #e5e7eb;
+}
+
+/* 👇 igual filosofía que .form-grid, no revienta el ancho */
+.asignatura-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asignatura-grid .form-group.full {
+  grid-column: 1 / -1;
+}
+
+
 /* BOTONES */
 
 .primary-btn {
@@ -324,6 +404,7 @@ form {
     box-shadow: none;
   }
 }
+/* BOTONES */
 
 .secondary-btn {
   border-radius: 999px;
@@ -331,8 +412,13 @@ form {
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
   font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  white-space: nowrap;
   transition: all 0.15s ease-out;
 
   &:hover {
@@ -340,6 +426,52 @@ form {
     border-color: rgba(209, 213, 219, 0.9);
   }
 }
+
+/* Variante especial para el botón "Subir nueva plantilla" del header */
+.upload-btn {
+  border-color: rgba(59, 130, 246, 0.9);
+  background: radial-gradient(
+    circle at top left,
+    rgba(59, 130, 246, 0.35),
+    rgba(15, 23, 42, 0.98)
+  );
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.55);
+  font-weight: 500;
+  padding: 0.45rem 1rem;
+}
+
+.upload-btn .upload-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.home-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap; // 👈 mejor en responsive
+}
+
+.home-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 
 .icon-btn {
   border: none;

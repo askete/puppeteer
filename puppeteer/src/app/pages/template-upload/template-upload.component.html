@@ -1,12 +1,24 @@
 <!-- src/app/pages/template-upload/template-upload.component.html -->
 <div class="upload-wrapper">
+  <!-- CABECERA PÁGINA -->
+  <header class="upload-header">
+    <div>
+      <h1>Subir plantilla HTML</h1>
+      <p class="subtitle">
+        Sube tu HTML principal, opcionalmente header y footer, y asócialos a tu usuario.
+      </p>
+    </div>
+
+    <a routerLink="/" class="secondary-btn back-btn">
+      ← Volver al inicio
+    </a>
+  </header>
+
+  <!-- PANEL PRINCIPAL -->
   <section class="panel">
     <header class="panel-header">
-      <h1>Subir plantilla HTML</h1>
-      <p>
-        Sube tu HTML principal, opcionalmente header y footer, y asócialos a tu
-        usuario.
-      </p>
+      <h2>Datos de la plantilla</h2>
+      <p>Completa la información y adjunta los ficheros necesarios.</p>
     </header>
 
     <form (ngSubmit)="onSubmit()" #f="ngForm" novalidate>

@@ -2,26 +2,33 @@
 <div class="home-wrapper">
   <!-- CABECERA -->
   <header class="home-header">
-    <div>
-      <h1>Generador de documentos</h1>
-      <p class="subtitle">
-        Selecciona una plantilla y rellena los datos para generar tu PDF/HTML.
-      </p>
+  <div class="home-header-text">
+    <h1>Generador de documentos</h1>
+    <p class="subtitle">
+      Selecciona una plantilla y rellena los datos para generar tu PDF/HTML.
+    </p>
 
-      <p class="user-info" *ngIf="auth.user$ | async as user">
-        Sesión iniciada como
-        <strong>{{ user.email || user.uid }}</strong>
-      </p>
-    </div>
-    <a routerLink="/templates/upload" class="secondary-btn">
-  Subir nueva plantilla
-</a>
+    <p class="user-info" *ngIf="auth.user$ | async as user">
+      Sesión iniciada como
+      <strong>{{ user.email || user.uid }}</strong>
+    </p>
+  </div>
 
+  <div class="home-header-actions">
+    <a
+      routerLink="/templates/upload"
+      class="secondary-btn upload-btn"
+    >
+      <span class="upload-icon">+</span>
+      Subir nueva plantilla
+    </a>
 
     <button type="button" class="logout-btn" (click)="auth.logout()">
       Cerrar sesión
     </button>
-  </header>
+  </div>
+</header>
+
 
   <main class="home-main">
     <!-- SECCIÓN: PLANTILLAS -->
@@ -89,18 +96,7 @@
 
       <form (ngSubmit)="generar()" #f="ngForm" novalidate>
         <div class="form-grid">
-          <!-- ASEGURADO -->
-          <div class="form-group" *ngIf="selectedTemplate?.showAsegurado">
-            <label for="asegurado">Asegurado</label>
-            <input
-              id="asegurado"
-              type="text"
-              name="asegurado"
-              [(ngModel)]="asegurado"
-              required
-              placeholder="Identificador del asegurado"
-            />
-          </div>
+        
 
           <!-- NOMBRE / RAZÓN SOCIAL -->
           <div class="form-group" *ngIf="selectedTemplate?.showNombre">
@@ -130,6 +126,43 @@
           </div>
         </div>
 
+        <!-- 🔹 CAMPOS DINÁMICOS DEVUELTOS POR LA LAMBDA -->
+        <div class="form-grid" *ngIf="templateVariables.length">
+          <div class="form-group" *ngFor="let v of templateVariables">
+            <label [attr.for]="'var_' + v.name">
+              {{ v.name }}
+            </label>
+
+            <!-- string -->
+            <input
+              *ngIf="v.type === 'string'"
+              [id]="'var_' + v.name"
+              type="text"
+              [name]="v.name"
+              [(ngModel)]="v.value"
+              required
+            />
+
+            <!-- date -->
+            <input
+              *ngIf="v.type === 'date'"
+              [id]="'var_' + v.name"
+              type="date"
+              [name]="v.name"
+              [(ngModel)]="v.value"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- estado de carga / errores de variables -->
+        <p class="alert alert-error" *ngIf="variablesError">
+          {{ variablesError }}
+        </p>
+        <p class="small-text" *ngIf="variablesLoading">
+          Cargando variables de la plantilla…
+        </p>
+
         <!-- GASTOS -->
         <div class="gastos-section" *ngIf="selectedTemplate?.showGastos">
           <div class="gastos-header">
@@ -144,10 +177,7 @@
           </div>
 
           <div class="gastos-list">
-            <div
-              class="gasto-card"
-              *ngFor="let g of gastos; let i = index"
-            >
+            <div class="gasto-card" *ngFor="let g of gastos; let i = index">
               <div class="gasto-header">
                 <span>Gasto #{{ i + 1 }}</span>
                 <button
@@ -201,7 +231,118 @@
           </div>
         </div>
 
-        <!-- ERRORES -->
+        <!-- ASIGNATURAS (solo si la plantilla lo usa) -->
+<div class="asignaturas-section" *ngIf="hasAsignaturas">
+  <div class="asignaturas-header">
+    <h3>Asignaturas</h3>
+    <button
+      type="button"
+      class="secondary-btn"
+      (click)="addAsignatura()"
+    >
+      + Añadir asignatura
+    </button>
+  </div>
+
+  <div class="asignaturas-list">
+    <div class="asignatura-card" *ngFor="let a of asignaturas; let i = index">
+      <div class="asignatura-header">
+        <span>Asignatura #{{ i + 1 }}</span>
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="removeAsignatura(i)"
+          *ngIf="asignaturas.length > 1"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="asignatura-grid">
+        <div class="form-group full">
+          <label for="a_nombre_{{ i }}">Nombre de la asignatura</label>
+          <input
+            id="a_nombre_{{ i }}"
+            type="text"
+            name="a_nombre_{{ i }}"
+            [(ngModel)]="a.nombre"
+            required
+            placeholder="Ej: Matemáticas"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="a_prof_{{ i }}">Profesor/a</label>
+          <input
+            id="a_prof_{{ i }}"
+            type="text"
+            name="a_prof_{{ i }}"
+            [(ngModel)]="a.profesor"
+            placeholder="Ej: Juan López"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="a_t1_{{ i }}">1º Trimestre</label>
+          <input
+            id="a_t1_{{ i }}"
+            type="text"
+            name="a_t1_{{ i }}"
+            [(ngModel)]="a.tr1"
+            placeholder="Ej: 8"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="a_t2_{{ i }}">2º Trimestre</label>
+          <input
+            id="a_t2_{{ i }}"
+            type="text"
+            name="a_t2_{{ i }}"
+            [(ngModel)]="a.tr2"
+            placeholder="Ej: 7"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="a_t3_{{ i }}">3º Trimestre</label>
+          <input
+            id="a_t3_{{ i }}"
+            type="text"
+            name="a_t3_{{ i }}"
+            [(ngModel)]="a.tr3"
+            placeholder="Ej: 9"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="a_final_{{ i }}">Nota final</label>
+          <input
+            id="a_final_{{ i }}"
+            type="text"
+            name="a_final_{{ i }}"
+            [(ngModel)]="a.final"
+            placeholder="Ej: 8"
+          />
+        </div>
+
+        <div class="form-group full">
+          <label for="a_obs_{{ i }}">Observaciones</label>
+          <input
+            id="a_obs_{{ i }}"
+            type="text"
+            name="a_obs_{{ i }}"
+            [(ngModel)]="a.obs"
+            placeholder="Ej: Buen rendimiento general"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+        <!-- ERRORES GENERALES -->
         <p class="alert alert-error" *ngIf="errorMsg">
           {{ errorMsg }}
         </p>
