@@ -529,6 +529,53 @@ form {
   }
 }
 
+/* ========== LOADING / SPINNERS ========== */
+
+.loading-block {
+  margin-top: 1rem;
+  padding: 1.5rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+}
+
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.spinner {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.4);
+  border-top-color: #60a5fa;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner.small {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
 /* RESPONSIVE */
 
 @media (max-width: 900px) {

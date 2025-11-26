@@ -107,6 +107,91 @@
         </div>
       </div>
 
+      <!-- INSTRUCCIONES PARA PREPARAR LOS HTML (PLEGABLE) -->
+      <section class="guidelines">
+        <button
+          type="button"
+          class="guidelines-toggle"
+          (click)="showGuidelines = !showGuidelines"
+        >
+          <span>Instrucciones para preparar los HTML</span>
+          <span class="chevron" [class.open]="showGuidelines">▾</span>
+        </button>
+
+        <div class="guidelines-body" *ngIf="showGuidelines">
+          <ul>
+            <li>
+              <strong>Variables dinámicas:</strong>
+              escribe las variables con el formato
+              <code>{{'{{NOMBRE_VARIABLE}}'}}</code>.
+              Ejemplos:
+              <code>{{'{{NOMBRE}}'}}</code>,
+              <code>{{'{{FECHA}}'}}</code>,
+              <code>{{'{{IMPORTE_TOTAL}}'}}</code>.
+            </li>
+
+            <li>
+              <strong>Formato de las variables:</strong>
+              usa nombres en MAYÚSCULAS, sin espacios y con guiones bajos si lo necesitas:
+              <code>{{'{{NOMBRE_COMPANIA}}'}}</code>,
+              <code>{{'{{CODIGO_DOCUMENTO}}'}}</code>.
+            </li>
+
+            <li>
+              <strong>Header y footer repetidos:</strong>
+              el HTML de cabecera y pie se aplicará
+              <u>en todas las páginas</u> del PDF.
+              Puedes usar en ellos las mismas variables dinámicas
+              (por ejemplo
+              <code>{{'{{NOMBRE_COMPANIA}}'}}</code>,
+              <code>{{'{{CODIGO_DOCUMENTO}}'}}</code>, etc.).
+            </li>
+
+            <li>
+              <strong>Números de página:</strong>
+              para mostrar el número de página actual y el total de páginas, incluye en el
+              footer este patrón:
+              <code>
+                Página
+                &lt;span class="pageNumber"&gt;&lt;/span&gt;
+                de
+                &lt;span class="totalPages"&gt;&lt;/span&gt;
+              </code>
+              Ejemplo completo:
+              <code>
+                ssssss qqqqqq · Página
+                &lt;span class="pageNumber"&gt;&lt;/span&gt;
+                de
+                &lt;span class="totalPages"&gt;&lt;/span&gt;
+              </code>
+            </li>
+
+            <li>
+              <strong>Estructura recomendada:</strong>
+              <ul>
+                <li>
+                  El <strong>HTML principal</strong> puede ser un documento completo
+                  (<code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>).
+                </li>
+                <li>
+                  El <strong>header</strong> y el <strong>footer</strong> es recomendable
+                  que sean solo el bloque de contenido (por ejemplo un
+                  <code>&lt;div&gt;...&lt;/div&gt;</code>), sin envolver en
+                  <code>&lt;html&gt;</code> ni <code>&lt;body&gt;</code>.
+                </li>
+              </ul>
+            </li>
+
+            <li>
+              <strong>Estilos:</strong>
+              puedes usar CSS en <code>&lt;style&gt;</code> o estilos en línea.
+              Evita márgenes externos muy grandes en header/footer; el generador de PDF
+              ya aplica sus propios márgenes de página.
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <!-- Flags de campos -->
       <div class="form-group">
         <label>Campos que utiliza esta plantilla</label>

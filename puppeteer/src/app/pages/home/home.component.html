@@ -2,32 +2,29 @@
 <div class="home-wrapper">
   <!-- CABECERA -->
   <header class="home-header">
-  <div class="home-header-text">
-    <h1>Generador de documentos</h1>
-    <p class="subtitle">
-      Selecciona una plantilla y rellena los datos para generar tu PDF/HTML.
-    </p>
+    <div class="home-header-text">
+      <h1>Generador de documentos</h1>
+      <p class="subtitle">
+        Selecciona una plantilla y rellena los datos para generar tu PDF/HTML.
+      </p>
 
-    <p class="user-info" *ngIf="auth.user$ | async as user">
-      Sesión iniciada como
-      <strong>{{ user.email || user.uid }}</strong>
-    </p>
-  </div>
+      <p class="user-info" *ngIf="auth.user$ | async as user">
+        Sesión iniciada como
+        <strong>{{ user.email || user.uid }}</strong>
+      </p>
+    </div>
 
-  <div class="home-header-actions">
-    <a
-      routerLink="/templates/upload"
-      class="secondary-btn upload-btn"
-    >
-      <span class="upload-icon">+</span>
-      Subir nueva plantilla
-    </a>
+    <div class="home-header-actions">
+      <a routerLink="/templates/upload" class="secondary-btn upload-btn">
+        <span class="upload-icon">+</span>
+        Subir nueva plantilla
+      </a>
 
-    <button type="button" class="logout-btn" (click)="auth.logout()">
-      Cerrar sesión
-    </button>
-  </div>
-</header>
+      <button type="button" class="logout-btn" (click)="auth.logout()">
+        Cerrar sesión
+      </button>
+    </div>
+  </header>
 
 
   <main class="home-main">
@@ -38,51 +35,61 @@
         <p>Solo podrás usar las plantillas asociadas a tu usuario.</p>
       </header>
 
-      <div *ngIf="templates.length; else noTemplates">
-        <div class="templates-grid">
-          <article
-            class="template-card"
-            *ngFor="let t of templates"
-            [class.selected]="t.id === plantilla"
-            (click)="selectTemplate(t)"
-          >
-            <h3>{{ t.title }}</h3>
-            <p class="template-description">
-              {{ t.description }}
-            </p>
-
-            <div class="template-meta">
-              <span class="meta-pill" *ngIf="t.showAsegurado">
-                Asegurado
-              </span>
-              <span class="meta-pill" *ngIf="t.showNombre">
-                Nombre/Razón social
-              </span>
-              <span class="meta-pill" *ngIf="t.showFecha">
-                Fecha
-              </span>
-              <span class="meta-pill gastos-pill" *ngIf="t.showGastos">
-                Incluye gastos
-              </span>
-            </div>
-
-            <div class="template-footer">
-              <span class="template-id">ID: {{ t.id }}</span>
-              <span class="template-cta">
-                {{ t.id === plantilla ? 'Seleccionada' : 'Usar plantilla' }}
-              </span>
-            </div>
-          </article>
-        </div>
+      <!-- 🔄 LOADING PLANTILLAS -->
+      <div class="loading-block" *ngIf="templatesLoading">
+        <div class="spinner"></div>
+        <p>Cargando plantillas…</p>
       </div>
 
-      <ng-template #noTemplates>
-        <p class="empty-msg">
-          No tienes plantillas configuradas todavía. Sube alguna a S3 y
-          añádela aquí.
-        </p>
-      </ng-template>
+      <!-- ✅ CONTENIDO NORMAL -->
+      <ng-container *ngIf="!templatesLoading">
+        <div *ngIf="templates.length; else noTemplates">
+          <div class="templates-grid">
+            <article
+              class="template-card"
+              *ngFor="let t of templates"
+              [class.selected]="t.id === plantilla"
+              (click)="selectTemplate(t)"
+            >
+              <h3>{{ t.title }}</h3>
+              <p class="template-description">
+                {{ t.description }}
+              </p>
+
+              <div class="template-meta">
+                <span class="meta-pill" *ngIf="t.showAsegurado">
+                  Asegurado
+                </span>
+                <span class="meta-pill" *ngIf="t.showNombre">
+                  Nombre/Razón social
+                </span>
+                <span class="meta-pill" *ngIf="t.showFecha">
+                  Fecha
+                </span>
+                <span class="meta-pill gastos-pill" *ngIf="t.showGastos">
+                  Incluye gastos
+                </span>
+              </div>
+
+              <div class="template-footer">
+                <span class="template-id">ID: {{ t.id }}</span>
+                <span class="template-cta">
+                  {{ t.id === plantilla ? 'Seleccionada' : 'Usar plantilla' }}
+                </span>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <ng-template #noTemplates>
+          <p class="empty-msg">
+            No tienes plantillas configuradas todavía. Sube alguna a S3 y
+            añádela aquí.
+          </p>
+        </ng-template>
+      </ng-container>
     </section>
+
 
     <!-- SECCIÓN: FORMULARIO DE VARIABLES -->
     <section class="panel form-section" *ngIf="selectedTemplate">
@@ -96,33 +103,21 @@
 
       <form (ngSubmit)="generar()" #f="ngForm" novalidate>
         <div class="form-grid">
-        
+
 
           <!-- NOMBRE / RAZÓN SOCIAL -->
           <div class="form-group" *ngIf="selectedTemplate?.showNombre">
             <label for="nombre">
               Nombre completo / Razón social
             </label>
-            <input
-              id="nombre"
-              type="text"
-              name="nombreCompletoRazonSocial"
-              [(ngModel)]="nombreCompletoRazonSocial"
-              required
-              placeholder="Ej: JUAN PÉREZ S.A."
-            />
+            <input id="nombre" type="text" name="nombreCompletoRazonSocial" [(ngModel)]="nombreCompletoRazonSocial"
+              required placeholder="Ej: JUAN PÉREZ S.A." />
           </div>
 
           <!-- FECHA -->
           <div class="form-group" *ngIf="selectedTemplate?.showFecha">
             <label for="fecha">Fecha</label>
-            <input
-              id="fecha"
-              type="date"
-              name="fecha"
-              [(ngModel)]="fecha"
-              required
-            />
+            <input id="fecha" type="date" name="fecha" [(ngModel)]="fecha" required />
           </div>
         </div>
 
@@ -134,44 +129,31 @@
             </label>
 
             <!-- string -->
-            <input
-              *ngIf="v.type === 'string'"
-              [id]="'var_' + v.name"
-              type="text"
-              [name]="v.name"
-              [(ngModel)]="v.value"
-              required
-            />
+            <input *ngIf="v.type === 'string'" [id]="'var_' + v.name" type="text" [name]="v.name" [(ngModel)]="v.value"
+              required />
 
             <!-- date -->
-            <input
-              *ngIf="v.type === 'date'"
-              [id]="'var_' + v.name"
-              type="date"
-              [name]="v.name"
-              [(ngModel)]="v.value"
-              required
-            />
+            <input *ngIf="v.type === 'date'" [id]="'var_' + v.name" type="date" [name]="v.name" [(ngModel)]="v.value"
+              required />
           </div>
         </div>
 
-        <!-- estado de carga / errores de variables -->
+               <!-- estado de carga / errores de variables -->
         <p class="alert alert-error" *ngIf="variablesError">
           {{ variablesError }}
         </p>
-        <p class="small-text" *ngIf="variablesLoading">
-          Cargando variables de la plantilla…
-        </p>
+
+        <div class="loading-inline" *ngIf="variablesLoading">
+          <div class="spinner small"></div>
+          <span>Cargando variables de la plantilla…</span>
+        </div>
+
 
         <!-- GASTOS -->
         <div class="gastos-section" *ngIf="selectedTemplate?.showGastos">
           <div class="gastos-header">
             <h3>Gastos</h3>
-            <button
-              type="button"
-              class="secondary-btn"
-              (click)="addGasto()"
-            >
+            <button type="button" class="secondary-btn" (click)="addGasto()">
               + Añadir gasto
             </button>
           </div>
@@ -180,12 +162,7 @@
             <div class="gasto-card" *ngFor="let g of gastos; let i = index">
               <div class="gasto-header">
                 <span>Gasto #{{ i + 1 }}</span>
-                <button
-                  type="button"
-                  class="icon-btn"
-                  (click)="removeGasto(i)"
-                  *ngIf="gastos.length > 1"
-                >
+                <button type="button" class="icon-btn" (click)="removeGasto(i)" *ngIf="gastos.length > 1">
                   ✕
                 </button>
               </div>
@@ -193,38 +170,20 @@
               <div class="gasto-grid">
                 <div class="form-group full">
                   <label for="g_desc_{{ i }}">Descripción</label>
-                  <input
-                    id="g_desc_{{ i }}"
-                    type="text"
-                    name="g_desc_{{ i }}"
-                    [(ngModel)]="g.descripcion"
-                    required
-                    placeholder="Descripción del gasto"
-                  />
+                  <input id="g_desc_{{ i }}" type="text" name="g_desc_{{ i }}" [(ngModel)]="g.descripcion" required
+                    placeholder="Descripción del gasto" />
                 </div>
 
                 <div class="form-group">
                   <label for="g_pres_{{ i }}">Presentado</label>
-                  <input
-                    id="g_pres_{{ i }}"
-                    type="text"
-                    name="g_pres_{{ i }}"
-                    [(ngModel)]="g.presentado"
-                    required
-                    placeholder="Ej: 120.50"
-                  />
+                  <input id="g_pres_{{ i }}" type="text" name="g_pres_{{ i }}" [(ngModel)]="g.presentado" required
+                    placeholder="Ej: 120.50" />
                 </div>
 
                 <div class="form-group">
                   <label for="g_eleg_{{ i }}">Elegible</label>
-                  <input
-                    id="g_eleg_{{ i }}"
-                    type="text"
-                    name="g_eleg_{{ i }}"
-                    [(ngModel)]="g.elegible"
-                    required
-                    placeholder="Ej: 100.00"
-                  />
+                  <input id="g_eleg_{{ i }}" type="text" name="g_eleg_{{ i }}" [(ngModel)]="g.elegible" required
+                    placeholder="Ej: 100.00" />
                 </div>
               </div>
             </div>
@@ -232,114 +191,66 @@
         </div>
 
         <!-- ASIGNATURAS (solo si la plantilla lo usa) -->
-<div class="asignaturas-section" *ngIf="hasAsignaturas">
-  <div class="asignaturas-header">
-    <h3>Asignaturas</h3>
-    <button
-      type="button"
-      class="secondary-btn"
-      (click)="addAsignatura()"
-    >
-      + Añadir asignatura
-    </button>
-  </div>
+        <div class="asignaturas-section" *ngIf="hasAsignaturas">
+          <div class="asignaturas-header">
+            <h3>Asignaturas</h3>
+            <button type="button" class="secondary-btn" (click)="addAsignatura()">
+              + Añadir asignatura
+            </button>
+          </div>
 
-  <div class="asignaturas-list">
-    <div class="asignatura-card" *ngFor="let a of asignaturas; let i = index">
-      <div class="asignatura-header">
-        <span>Asignatura #{{ i + 1 }}</span>
-        <button
-          type="button"
-          class="icon-btn"
-          (click)="removeAsignatura(i)"
-          *ngIf="asignaturas.length > 1"
-        >
-          ✕
-        </button>
-      </div>
+          <div class="asignaturas-list">
+            <div class="asignatura-card" *ngFor="let a of asignaturas; let i = index">
+              <div class="asignatura-header">
+                <span>Asignatura #{{ i + 1 }}</span>
+                <button type="button" class="icon-btn" (click)="removeAsignatura(i)" *ngIf="asignaturas.length > 1">
+                  ✕
+                </button>
+              </div>
 
-      <div class="asignatura-grid">
-        <div class="form-group full">
-          <label for="a_nombre_{{ i }}">Nombre de la asignatura</label>
-          <input
-            id="a_nombre_{{ i }}"
-            type="text"
-            name="a_nombre_{{ i }}"
-            [(ngModel)]="a.nombre"
-            required
-            placeholder="Ej: Matemáticas"
-          />
+              <div class="asignatura-grid">
+                <div class="form-group full">
+                  <label for="a_nombre_{{ i }}">Nombre de la asignatura</label>
+                  <input id="a_nombre_{{ i }}" type="text" name="a_nombre_{{ i }}" [(ngModel)]="a.nombre" required
+                    placeholder="Ej: Matemáticas" />
+                </div>
+
+                <div class="form-group">
+                  <label for="a_prof_{{ i }}">Profesor/a</label>
+                  <input id="a_prof_{{ i }}" type="text" name="a_prof_{{ i }}" [(ngModel)]="a.profesor"
+                    placeholder="Ej: Juan López" />
+                </div>
+
+                <div class="form-group">
+                  <label for="a_t1_{{ i }}">1º Trimestre</label>
+                  <input id="a_t1_{{ i }}" type="text" name="a_t1_{{ i }}" [(ngModel)]="a.tr1" placeholder="Ej: 8" />
+                </div>
+
+                <div class="form-group">
+                  <label for="a_t2_{{ i }}">2º Trimestre</label>
+                  <input id="a_t2_{{ i }}" type="text" name="a_t2_{{ i }}" [(ngModel)]="a.tr2" placeholder="Ej: 7" />
+                </div>
+
+                <div class="form-group">
+                  <label for="a_t3_{{ i }}">3º Trimestre</label>
+                  <input id="a_t3_{{ i }}" type="text" name="a_t3_{{ i }}" [(ngModel)]="a.tr3" placeholder="Ej: 9" />
+                </div>
+
+                <div class="form-group">
+                  <label for="a_final_{{ i }}">Nota final</label>
+                  <input id="a_final_{{ i }}" type="text" name="a_final_{{ i }}" [(ngModel)]="a.final"
+                    placeholder="Ej: 8" />
+                </div>
+
+                <div class="form-group full">
+                  <label for="a_obs_{{ i }}">Observaciones</label>
+                  <input id="a_obs_{{ i }}" type="text" name="a_obs_{{ i }}" [(ngModel)]="a.obs"
+                    placeholder="Ej: Buen rendimiento general" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="a_prof_{{ i }}">Profesor/a</label>
-          <input
-            id="a_prof_{{ i }}"
-            type="text"
-            name="a_prof_{{ i }}"
-            [(ngModel)]="a.profesor"
-            placeholder="Ej: Juan López"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="a_t1_{{ i }}">1º Trimestre</label>
-          <input
-            id="a_t1_{{ i }}"
-            type="text"
-            name="a_t1_{{ i }}"
-            [(ngModel)]="a.tr1"
-            placeholder="Ej: 8"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="a_t2_{{ i }}">2º Trimestre</label>
-          <input
-            id="a_t2_{{ i }}"
-            type="text"
-            name="a_t2_{{ i }}"
-            [(ngModel)]="a.tr2"
-            placeholder="Ej: 7"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="a_t3_{{ i }}">3º Trimestre</label>
-          <input
-            id="a_t3_{{ i }}"
-            type="text"
-            name="a_t3_{{ i }}"
-            [(ngModel)]="a.tr3"
-            placeholder="Ej: 9"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="a_final_{{ i }}">Nota final</label>
-          <input
-            id="a_final_{{ i }}"
-            type="text"
-            name="a_final_{{ i }}"
-            [(ngModel)]="a.final"
-            placeholder="Ej: 8"
-          />
-        </div>
-
-        <div class="form-group full">
-          <label for="a_obs_{{ i }}">Observaciones</label>
-          <input
-            id="a_obs_{{ i }}"
-            type="text"
-            name="a_obs_{{ i }}"
-            [(ngModel)]="a.obs"
-            placeholder="Ej: Buen rendimiento general"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 
         <!-- ERRORES GENERALES -->
@@ -349,11 +260,7 @@
 
         <!-- BOTÓN GENERAR -->
         <div class="form-actions">
-          <button
-            type="submit"
-            class="primary-btn"
-            [disabled]="loading || !f.form.valid || !plantilla"
-          >
+          <button type="submit" class="primary-btn" [disabled]="loading || !f.form.valid || !plantilla">
             <span *ngIf="!loading">Generar documento</span>
             <span *ngIf="loading">Generando…</span>
           </button>
@@ -372,21 +279,13 @@
     <div class="result-links">
       <p *ngIf="result.pdfUrl">
         PDF:
-        <a
-          [href]="result.pdfUrl"
-          target="_blank"
-          rel="noopener"
-        >
+        <a [href]="result.pdfUrl" target="_blank" rel="noopener">
           Abrir PDF
         </a>
       </p>
       <p *ngIf="result.htmlUrl">
         Email HTML:
-        <a
-          [href]="result.htmlUrl"
-          target="_blank"
-          rel="noopener"
-        >
+        <a [href]="result.htmlUrl" target="_blank" rel="noopener">
           Abrir HTML
         </a>
       </p>

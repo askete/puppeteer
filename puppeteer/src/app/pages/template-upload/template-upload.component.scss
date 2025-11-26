@@ -249,6 +249,71 @@ form {
   cursor: pointer;
 }
 
+
+.guidelines {
+  margin-top: 0.75rem;
+  border-radius: 0.9rem;
+  border: 1px dashed rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.85);
+  font-size: 0.8rem;
+  color: #e5e7eb;
+}
+
+.guidelines-toggle {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.guidelines-body {
+  padding: 0.2rem 0.9rem 0.8rem;
+}
+
+.guidelines-body ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.guidelines-body li {
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.guidelines-body ul ul {
+  margin-top: 0.25rem;
+  list-style: circle;
+}
+
+.guidelines code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.78rem;
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.3rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  display: inline-block;
+  margin-top: 0.15rem;
+}
+
+.chevron {
+  transition: transform 0.15s ease-out;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+
 /* RESPONSIVE */
 
 @media (max-width: 600px) {

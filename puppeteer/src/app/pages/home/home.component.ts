@@ -57,18 +57,19 @@ export class HomeComponent implements OnInit {
   ];
   hasAsignaturas = false;
 
-
-  loading = false;
+  loading = false;                 // generar documento
+  templatesLoading = false;        // 👈 NUEVO: cargar plantillas
   errorMsg = '';
   result: GenerateResponse | null = null;
   private currentUserId: string | null = null;
+
 
   // 👇 NUEVO: variables dinámicas de la plantilla
   templateVariables: TemplateVariable[] = [];
   variablesLoading = false;
   variablesError = '';
 
-  ngOnInit(): void {
+    ngOnInit(): void {
     this.auth.user$.subscribe(user => {
       console.log('user$ en home:', user);
 
@@ -77,22 +78,24 @@ export class HomeComponent implements OnInit {
         this.templates = [];
         this.selectedTemplate = null;
         this.plantilla = null;
+        this.templatesLoading = false;   // 👈 reseteamos por si acaso
         return;
       }
 
       this.currentUserId = user.uid;
       console.log('Cargando plantillas para userId:', user.uid);
 
+      this.templatesLoading = true;      // 👈 empezamos loading
+
       this.pdf.getTemplatesForUser(user.uid).subscribe({
         next: (templates) => {
           console.log('Respuesta getTemplatesForUser:', templates);
 
-          // 1) Filtramos cualquier id que sea cuerpoDeCorreo / cuerpo_de_correo / etc.
           const filtered = (templates || []).filter((t: any) => {
             const rawId = (t.id ?? '').toString();
             const normalized = rawId
               .toLowerCase()
-              .replace(/[_-]/g, ''); // quita _ y -
+              .replace(/[_-]/g, '');
 
             const isEmailBody = normalized.startsWith('cuerpodecorreo');
 
@@ -103,24 +106,26 @@ export class HomeComponent implements OnInit {
             return !isEmailBody;
           });
 
-          // 2) Mapeamos a TemplateMeta SOLO las que pasaron el filtro
           this.templates = filtered.map((t: any) => this.toTemplateMeta(t));
 
-          // 3) Seleccionamos la primera si queda alguna
           if (this.templates.length) {
             this.selectTemplate(this.templates[0]);
           } else {
             this.selectedTemplate = null;
             this.plantilla = null;
           }
+
+          this.templatesLoading = false;  // 👈 fin loading OK
         },
         error: (err) => {
           console.error('Error cargando plantillas', err);
           this.errorMsg = 'Error cargando plantillas del usuario.';
+          this.templatesLoading = false;  // 👈 fin loading con error
         }
       });
     });
   }
+
 
 
 

@@ -20,6 +20,7 @@ export class TemplateUploadComponent {
 
   showNombre = true;
   showFecha = true;
+  showGuidelines = false;
 
   loading = false;
   errorMsg = '';
