@@ -13,23 +13,16 @@ interface TemplateMeta {
   showGastos: boolean;
 }
 
-interface AsignaturaRow {
-  nombre: string;
-  profesor: string;
-  tr1: string;
-  tr2: string;
-  tr3: string;
-  final: string;
-  obs: string;
-}
+// 👇 tipos que devuelve la lambda getTemplateVariables
+type VariableType = 'string' | 'date' | 'table' | 'gastos';
 
-
-// 👇 variables que devuelve la lambda
 interface TemplateVariable {
   name: string;
-  type: string; // 'string' | 'date' | 'gastos'
+  type: VariableType;
+  fields?: string[];      // para type === 'table' o 'gastos'
   value?: any;
 }
+
 
 @Component({
   selector: 'app-home',
@@ -44,32 +37,30 @@ export class HomeComponent implements OnInit {
   selectedTemplate?: TemplateMeta | null = null;
 
   plantilla: string | null = null;
-  nombreCompletoRazonSocial = '';                           // el usuario lo escribe
-  fecha = new Date().toISOString().slice(0, 10);            // día de hoy por defecto
 
-
-  gastos: Array<{ descripcion: string; presentado: string; elegible: string }> =
-    [{ descripcion: '', presentado: '', elegible: '' }];
-
-  // 👇 igual que gastos, pero para asignaturas
-  asignaturas: AsignaturaRow[] = [
-    { nombre: '', profesor: '', tr1: '', tr2: '', tr3: '', final: '', obs: '' }
-  ];
-  hasAsignaturas = false;
+  // Campos “especiales” que ya tenías en el diseño
+  nombreCompletoRazonSocial = '';
+  fecha = new Date().toISOString().slice(0, 10);
 
   loading = false;                 // generar documento
-  templatesLoading = false;        // 👈 NUEVO: cargar plantillas
+  templatesLoading = false;        // cargar plantillas
   errorMsg = '';
   result: GenerateResponse | null = null;
   private currentUserId: string | null = null;
 
+  // 🔹 Variables dinámicas
+  // - scalarVariables: inputs normales (string/date)
+  // - tableVariables : variables de tipo tabla (incluido 'gastos')
+  // - tableData      : datos de cada tabla (filas)
+  templateVariables: TemplateVariable[] = [];               // alias para el HTML antiguo
+  scalarVariables: TemplateVariable[] = [];
+  tableVariables: TemplateVariable[] = [];
+  tableData: { [varName: string]: any[] } = {};
 
-  // 👇 NUEVO: variables dinámicas de la plantilla
-  templateVariables: TemplateVariable[] = [];
   variablesLoading = false;
   variablesError = '';
 
-    ngOnInit(): void {
+  ngOnInit(): void {
     this.auth.user$.subscribe(user => {
       console.log('user$ en home:', user);
 
@@ -78,14 +69,14 @@ export class HomeComponent implements OnInit {
         this.templates = [];
         this.selectedTemplate = null;
         this.plantilla = null;
-        this.templatesLoading = false;   // 👈 reseteamos por si acaso
+        this.templatesLoading = false;
         return;
       }
 
       this.currentUserId = user.uid;
       console.log('Cargando plantillas para userId:', user.uid);
 
-      this.templatesLoading = true;      // 👈 empezamos loading
+      this.templatesLoading = true;
 
       this.pdf.getTemplatesForUser(user.uid).subscribe({
         next: (templates) => {
@@ -115,21 +106,16 @@ export class HomeComponent implements OnInit {
             this.plantilla = null;
           }
 
-          this.templatesLoading = false;  // 👈 fin loading OK
+          this.templatesLoading = false;
         },
         error: (err) => {
           console.error('Error cargando plantillas', err);
           this.errorMsg = 'Error cargando plantillas del usuario.';
-          this.templatesLoading = false;  // 👈 fin loading con error
+          this.templatesLoading = false;
         }
       });
     });
   }
-
-
-
-
-
 
   // Mapea lo que devuelve la API a lo que necesita el front
   private toTemplateMeta(t: any): TemplateMeta {
@@ -172,88 +158,104 @@ export class HomeComponent implements OnInit {
     };
   }
 
-
-
   selectTemplate(t: TemplateMeta): void {
     this.selectedTemplate = t;
     this.plantilla = t.id;
     this.errorMsg = '';
     this.result = null;
 
-    // 👇 reseteamos variables dinámicas
+    // reset dinámicos
     this.templateVariables = [];
+    this.scalarVariables = [];
+    this.tableVariables = [];
+    this.tableData = {};
     this.variablesError = '';
 
-    // 👇 si tenemos userId, pedimos variables a la lambda
     if (this.currentUserId) {
       this.loadTemplateVariables(this.currentUserId, t.id);
     }
   }
 
-  private loadTemplateVariables(userId: string, templateId: string): void {
-    this.variablesLoading = true;
+ private loadTemplateVariables(userId: string, templateId: string): void {
+  this.variablesLoading = true;
 
-    this.pdf.getTemplateVariables(userId, templateId).subscribe({
-      next: ({ templateId: _tid, variables }) => {
-        this.variablesLoading = false;
+  this.pdf.getTemplateVariables(userId, templateId).subscribe({
+    next: (resp) => {
+      this.variablesLoading = false;
 
-        const specialNames = new Set([
-          'nombreCompletoRazonSocial',
-          'fecha',
-          'gastos',
-          'gastos2',
-          'filasAsignaturas'  // 👈 NUEVO: lo tratamos de forma especial
-        ]);
+      const { templateId: _tid, variables } = resp;
 
-        // Detectamos si esta plantilla usa filasAsignaturas
-        this.hasAsignaturas = !!variables?.some(
-          v => v.name === 'filasAsignaturas' || v.type === 'asignaturas'
-        );
+      // 👇 aquí forzamos el tipo a TemplateVariable[]
+      const allVars = (variables || []) as TemplateVariable[];
 
-        // 👇 dejamos fuera las que ya manejamos con campos propios
-        this.templateVariables = (variables || [])
-          .filter(v => !specialNames.has(v.name))
-          .map(v => ({ ...v, value: '' }));
+      // Campos que ya tienes fijos en el componente
+      const specialScalarNames = new Set([
+        'nombreCompletoRazonSocial',
+        'fecha'
+      ]);
 
-        // 👇 si la lambda detecta 'gastos' pero el meta no lo marca, lo activamos
-        if (variables?.some(v => v.type === 'gastos')) {
-          if (this.selectedTemplate) {
-            this.selectedTemplate.showGastos = true;
-          }
-        }
-      },
-      error: (err) => {
-        console.error('Error obteniendo variables de plantilla', err);
-        this.variablesLoading = false;
-        this.variablesError = 'No se pudieron cargar las variables de la plantilla.';
+      // 1) escalares (string/date) excepto los especiales
+      this.scalarVariables = allVars
+        .filter(v => v.type === 'string' || v.type === 'date')
+        .filter(v => !specialScalarNames.has(v.name))
+        .map(v => ({
+          ...v,
+          value: v.type === 'date'
+            ? new Date().toISOString().slice(0, 10)
+            : ''
+        }));
+
+      // 2) tablas (table + gastos)
+      this.tableVariables = allVars
+        .filter(v => v.type === 'table' || v.type === 'gastos');
+
+      // 3) inicializar datos de tablas
+      this.tableData = {};
+      this.tableVariables.forEach(tv => {
+        const fields = tv.fields || [];
+        const emptyRow = fields.reduce((acc, f) => {
+          acc[f] = '';
+          return acc;
+        }, {} as any);
+        this.tableData[tv.name] = [emptyRow];
+      });
+
+      // Alias para que templateVariables siga funcionando en tu HTML si lo usas
+      this.templateVariables = this.scalarVariables;
+
+      // Marcar showGastos si hay una tabla de gastos
+      if (this.selectedTemplate && this.tableVariables.some(v => v.name === 'gastos' || v.type === 'gastos')) {
+        this.selectedTemplate.showGastos = true;
       }
-    });
+    },
+    error: (err) => {
+      console.error('Error obteniendo variables de plantilla', err);
+      this.variablesLoading = false;
+      this.variablesError = 'No se pudieron cargar las variables de la plantilla.';
+    }
+  });
+}
+
+
+  // 🔹 Añadir una fila a cualquier tabla dinámica
+  addTableRow(varName: string): void {
+    const tv = this.tableVariables.find(t => t.name === varName);
+    if (!tv || !tv.fields?.length) return;
+
+    const newRow = tv.fields.reduce((acc, f) => {
+      acc[f] = '';
+      return acc;
+    }, {} as any);
+
+    const current = this.tableData[varName] || [];
+    this.tableData[varName] = [...current, newRow];
   }
 
-
-  addAsignatura(): void {
-    this.asignaturas.push({
-      nombre: '',
-      profesor: '',
-      tr1: '',
-      tr2: '',
-      tr3: '',
-      final: '',
-      obs: ''
-    });
-  }
-
-  removeAsignatura(i: number): void {
-    this.asignaturas.splice(i, 1);
-  }
-
-
-  addGasto(): void {
-    this.gastos.push({ descripcion: '', presentado: '', elegible: '' });
-  }
-
-  removeGasto(i: number): void {
-    this.gastos.splice(i, 1);
+  // 🔹 Eliminar una fila concreta de cualquier tabla
+  removeTableRow(varName: string, index: number): void {
+    const rows = this.tableData[varName];
+    if (!rows || rows.length <= 1) return; // deja al menos una fila
+    rows.splice(index, 1);
   }
 
   generar(): void {
@@ -272,22 +274,28 @@ export class HomeComponent implements OnInit {
     this.errorMsg = '';
     this.result = null;
 
-    // 👇 construimos el payload base
     const payload: any = {
       plantilla: this.plantilla,
-      nombreCompletoRazonSocial: this.nombreCompletoRazonSocial,
-      fecha: this.fecha,
-      gastos: this.gastos,
-      filasAsignaturas: this.asignaturas,   // 👈 NUEVO
       userId: user.uid
     };
 
-    // añadimos todas las variables dinámicas (aquí entrará 'asegurado' si la plantilla lo tiene)
-    this.templateVariables.forEach(v => {
+    // Campos “especiales” que sigues usando de forma explícita
+    if (this.nombreCompletoRazonSocial) {
+      payload.nombreCompletoRazonSocial = this.nombreCompletoRazonSocial;
+    }
+    if (this.fecha) {
+      payload.fecha = this.fecha;
+    }
+
+    // 1) Variables escalares dinámicas
+    this.scalarVariables.forEach(v => {
       payload[v.name] = v.value;
     });
 
-
+    // 2) Variables de tabla dinámicas (gastos, filasAsignaturas, lo que sea)
+    this.tableVariables.forEach(tv => {
+      payload[tv.name] = this.tableData[tv.name] || [];
+    });
 
     this.pdf.generate(payload).subscribe({
       next: (res) => {
@@ -303,5 +311,4 @@ export class HomeComponent implements OnInit {
       }
     });
   }
-
 }

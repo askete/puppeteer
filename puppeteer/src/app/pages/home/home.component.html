@@ -26,7 +26,6 @@
     </div>
   </header>
 
-
   <main class="home-main">
     <!-- SECCIÓN: PLANTILLAS -->
     <section class="panel templates-section">
@@ -90,7 +89,6 @@
       </ng-container>
     </section>
 
-
     <!-- SECCIÓN: FORMULARIO DE VARIABLES -->
     <section class="panel form-section" *ngIf="selectedTemplate">
       <header class="panel-header">
@@ -101,44 +99,73 @@
         </p>
       </header>
 
-      <form (ngSubmit)="generar()" #f="ngForm" novalidate>
+            <form (ngSubmit)="generar()" #f="ngForm" novalidate>
         <div class="form-grid">
-
-
           <!-- NOMBRE / RAZÓN SOCIAL -->
           <div class="form-group" *ngIf="selectedTemplate?.showNombre">
             <label for="nombre">
               Nombre completo / Razón social
             </label>
-            <input id="nombre" type="text" name="nombreCompletoRazonSocial" [(ngModel)]="nombreCompletoRazonSocial"
-              required placeholder="Ej: JUAN PÉREZ S.A." />
+            <input
+              id="nombre"
+              type="text"
+              name="nombreCompletoRazonSocial"
+              [(ngModel)]="nombreCompletoRazonSocial"
+              required
+              placeholder="Ej: JUAN PÉREZ S.A."
+            />
           </div>
 
           <!-- FECHA -->
           <div class="form-group" *ngIf="selectedTemplate?.showFecha">
             <label for="fecha">Fecha</label>
-            <input id="fecha" type="date" name="fecha" [(ngModel)]="fecha" required />
+            <input
+              id="fecha"
+              type="date"
+              name="fecha"
+              [(ngModel)]="fecha"
+              required
+            />
           </div>
         </div>
 
-        <!-- 🔹 CAMPOS DINÁMICOS DEVUELTOS POR LA LAMBDA -->
-        <div class="form-grid" *ngIf="templateVariables.length">
-          <div class="form-group" *ngFor="let v of templateVariables">
-            <label [attr.for]="'var_' + v.name">
-              {{ v.name }}
-            </label>
+        <!-- 🔹 CAMPOS DINÁMICOS (ESCALARES) DEVUELTOS POR LA LAMBDA -->
+        <section
+          class="dynamic-vars-section"
+          *ngIf="templateVariables.length"
+        >
+          <h3 class="section-title">Campos adicionales</h3>
 
-            <!-- string -->
-            <input *ngIf="v.type === 'string'" [id]="'var_' + v.name" type="text" [name]="v.name" [(ngModel)]="v.value"
-              required />
+          <div class="form-grid">
+            <div class="form-group" *ngFor="let v of templateVariables">
+              <label [attr.for]="'var_' + v.name">
+                {{ v.name }}
+              </label>
 
-            <!-- date -->
-            <input *ngIf="v.type === 'date'" [id]="'var_' + v.name" type="date" [name]="v.name" [(ngModel)]="v.value"
-              required />
+              <!-- string -->
+              <input
+                *ngIf="v.type === 'string'"
+                [id]="'var_' + v.name"
+                type="text"
+                [name]="v.name"
+                [(ngModel)]="v.value"
+                required
+              />
+
+              <!-- date -->
+              <input
+                *ngIf="v.type === 'date'"
+                [id]="'var_' + v.name"
+                type="date"
+                [name]="v.name"
+                [(ngModel)]="v.value"
+                required
+              />
+            </div>
           </div>
-        </div>
+        </section>
 
-               <!-- estado de carga / errores de variables -->
+        <!-- estado de carga / errores de variables -->
         <p class="alert alert-error" *ngIf="variablesError">
           {{ variablesError }}
         </p>
@@ -148,109 +175,67 @@
           <span>Cargando variables de la plantilla…</span>
         </div>
 
+                <!-- 🔹 TABLAS DINÁMICAS (gastos, filasAsignaturas, etc.) -->
+        <section class="tables-section" *ngIf="tableVariables?.length">
+          <h3 class="section-title">Listas / tablas</h3>
 
-        <!-- GASTOS -->
-        <div class="gastos-section" *ngIf="selectedTemplate?.showGastos">
-          <div class="gastos-header">
-            <h3>Gastos</h3>
-            <button type="button" class="secondary-btn" (click)="addGasto()">
-              + Añadir gasto
-            </button>
-          </div>
+          <div class="table-block" *ngFor="let tv of tableVariables">
+            <div class="table-block-header">
+              <h4 class="table-title">
+                {{ tv.name === 'gastos' ? 'Gastos' : (tv.name | titlecase) }}
+              </h4>
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="addTableRow(tv.name)"
+              >
+                + Añadir fila
+              </button>
+            </div>
 
-          <div class="gastos-list">
-            <div class="gasto-card" *ngFor="let g of gastos; let i = index">
-              <div class="gasto-header">
-                <span>Gasto #{{ i + 1 }}</span>
-                <button type="button" class="icon-btn" (click)="removeGasto(i)" *ngIf="gastos.length > 1">
-                  ✕
-                </button>
-              </div>
+            <!-- Lista de filas como "cards", una debajo de otra -->
+            <div class="rows-list" *ngIf="tv.fields?.length">
+              <div
+                class="row-card"
+                *ngFor="let row of tableData[tv.name]; let i = index"
+              >
+                <div class="row-card-header">
+                  <span>
+                    {{ tv.name === 'gastos' ? 'Gasto' : (tv.name | titlecase) }}
+                    #{{ i + 1 }}
+                  </span>
 
-              <div class="gasto-grid">
-                <div class="form-group full">
-                  <label for="g_desc_{{ i }}">Descripción</label>
-                  <input id="g_desc_{{ i }}" type="text" name="g_desc_{{ i }}" [(ngModel)]="g.descripcion" required
-                    placeholder="Descripción del gasto" />
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="removeTableRow(tv.name, i)"
+                    *ngIf="tableData[tv.name].length > 1"
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                <div class="form-group">
-                  <label for="g_pres_{{ i }}">Presentado</label>
-                  <input id="g_pres_{{ i }}" type="text" name="g_pres_{{ i }}" [(ngModel)]="g.presentado" required
-                    placeholder="Ej: 120.50" />
-                </div>
+                <div class="row-card-grid">
+                  <div class="form-group" *ngFor="let field of tv.fields">
+                    <label
+                      [attr.for]="tv.name + '_' + field + '_' + i"
+                    >
+                      {{ field }}
+                    </label>
 
-                <div class="form-group">
-                  <label for="g_eleg_{{ i }}">Elegible</label>
-                  <input id="g_eleg_{{ i }}" type="text" name="g_eleg_{{ i }}" [(ngModel)]="g.elegible" required
-                    placeholder="Ej: 100.00" />
+                    <input
+                      type="text"
+                      [id]="tv.name + '_' + field + '_' + i"
+                      [name]="tv.name + '_' + field + '_' + i"
+                      [(ngModel)]="tableData[tv.name][i][field]"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- ASIGNATURAS (solo si la plantilla lo usa) -->
-        <div class="asignaturas-section" *ngIf="hasAsignaturas">
-          <div class="asignaturas-header">
-            <h3>Asignaturas</h3>
-            <button type="button" class="secondary-btn" (click)="addAsignatura()">
-              + Añadir asignatura
-            </button>
-          </div>
-
-          <div class="asignaturas-list">
-            <div class="asignatura-card" *ngFor="let a of asignaturas; let i = index">
-              <div class="asignatura-header">
-                <span>Asignatura #{{ i + 1 }}</span>
-                <button type="button" class="icon-btn" (click)="removeAsignatura(i)" *ngIf="asignaturas.length > 1">
-                  ✕
-                </button>
-              </div>
-
-              <div class="asignatura-grid">
-                <div class="form-group full">
-                  <label for="a_nombre_{{ i }}">Nombre de la asignatura</label>
-                  <input id="a_nombre_{{ i }}" type="text" name="a_nombre_{{ i }}" [(ngModel)]="a.nombre" required
-                    placeholder="Ej: Matemáticas" />
-                </div>
-
-                <div class="form-group">
-                  <label for="a_prof_{{ i }}">Profesor/a</label>
-                  <input id="a_prof_{{ i }}" type="text" name="a_prof_{{ i }}" [(ngModel)]="a.profesor"
-                    placeholder="Ej: Juan López" />
-                </div>
-
-                <div class="form-group">
-                  <label for="a_t1_{{ i }}">1º Trimestre</label>
-                  <input id="a_t1_{{ i }}" type="text" name="a_t1_{{ i }}" [(ngModel)]="a.tr1" placeholder="Ej: 8" />
-                </div>
-
-                <div class="form-group">
-                  <label for="a_t2_{{ i }}">2º Trimestre</label>
-                  <input id="a_t2_{{ i }}" type="text" name="a_t2_{{ i }}" [(ngModel)]="a.tr2" placeholder="Ej: 7" />
-                </div>
-
-                <div class="form-group">
-                  <label for="a_t3_{{ i }}">3º Trimestre</label>
-                  <input id="a_t3_{{ i }}" type="text" name="a_t3_{{ i }}" [(ngModel)]="a.tr3" placeholder="Ej: 9" />
-                </div>
-
-                <div class="form-group">
-                  <label for="a_final_{{ i }}">Nota final</label>
-                  <input id="a_final_{{ i }}" type="text" name="a_final_{{ i }}" [(ngModel)]="a.final"
-                    placeholder="Ej: 8" />
-                </div>
-
-                <div class="form-group full">
-                  <label for="a_obs_{{ i }}">Observaciones</label>
-                  <input id="a_obs_{{ i }}" type="text" name="a_obs_{{ i }}" [(ngModel)]="a.obs"
-                    placeholder="Ej: Buen rendimiento general" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
 
 
         <!-- ERRORES GENERALES -->
@@ -260,12 +245,17 @@
 
         <!-- BOTÓN GENERAR -->
         <div class="form-actions">
-          <button type="submit" class="primary-btn" [disabled]="loading || !f.form.valid || !plantilla">
+          <button
+            type="submit"
+            class="primary-btn"
+            [disabled]="loading || !f.form.valid || !plantilla"
+          >
             <span *ngIf="!loading">Generar documento</span>
             <span *ngIf="loading">Generando…</span>
           </button>
         </div>
       </form>
+
     </section>
   </main>
 
