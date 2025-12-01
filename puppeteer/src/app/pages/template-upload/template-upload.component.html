@@ -128,6 +128,11 @@
               <code>{{'{{NOMBRE}}'}}</code>,
               <code>{{'{{FECHA}}'}}</code>,
               <code>{{'{{IMPORTE_TOTAL}}'}}</code>.
+              El sistema detecta automáticamente todas las apariciones de
+              <code>{{'{{NOMBRE_VARIABLE}}'}}</code> en el HTML principal, header y footer.
+              Cuando generes un documento, verás un campo para cada una de esas variables
+              y, antes de crear el PDF, el backend sustituirá esos marcadores por los
+              valores que hayas introducido.
             </li>
 
             <li>
@@ -135,6 +140,44 @@
               usa nombres en MAYÚSCULAS, sin espacios y con guiones bajos si lo necesitas:
               <code>{{'{{NOMBRE_COMPANIA}}'}}</code>,
               <code>{{'{{CODIGO_DOCUMENTO}}'}}</code>.
+              Evita caracteres especiales o acentos en los nombres de variable.
+            </li>
+
+            <li>
+              <strong>Tablas dinámicas (metadatos en comentarios):</strong>
+              si quieres que una tabla se comporte como un bloque dinámico donde el usuario
+              pueda añadir/eliminar filas, debes marcarla con un comentario especial justo
+              antes de la fila de ejemplo:
+              <pre><code>&lt;!-- &#64;table filasAsignaturas nombre|profesor|tr1|tr2|tr3|final|obs --&gt;</code></pre>
+              Donde:
+              <ul>
+                <li>
+                  <code>filasAsignaturas</code> es el identificador interno de la tabla
+                  (el nombre del grupo de filas).
+                </li>
+                <li>
+                  <code>nombre|profesor|tr1|tr2|tr3|final|obs</code> son las columnas,
+                  separadas por <code>|</code>, en el orden en que aparecerán para el usuario.
+                </li>
+              </ul>
+              A continuación de ese comentario, deja una única fila
+              <code>&lt;tr&gt;</code> de ejemplo con las celdas que se repetirán,
+              utilizando variables dinámicas en su interior. Por ejemplo:
+              <pre><code>&lt;!-- &#64;table filasAsignaturas nombre|profesor|tr1|tr2|tr3|final|obs --&gt;
+&lt;tr&gt;
+  &lt;td&gt;{{'{{NOMBRE}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{PROFESOR}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{TR1}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{TR2}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{TR3}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{FINAL}}'}}&lt;/td&gt;
+  &lt;td&gt;{{'{{OBS}}'}}&lt;/td&gt;
+&lt;/tr&gt;</code></pre>
+              El sistema leerá el comentario <code>&#64;table</code>, interpretará qué columnas
+              tiene la tabla y generará en la interfaz un editor de filas con esos campos.
+              Al generar el documento, se repetirá esa fila tantas veces como filas haya
+              introducido el usuario, sustituyendo las variables dinámicas por los valores
+              de cada fila.
             </li>
 
             <li>
